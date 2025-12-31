@@ -1,0 +1,209 @@
+@startuml Diagramme de classes - Entités User Service (E-Banking 3.0)
+
+' Style général
+skinparam shadowing false
+skinparam backgroundColor #FEFEFE
+skinparam classBackgroundColor #FFFFFF
+skinparam classBorderColor #666666
+skinparam arrowColor #666666
+skinparam stereotypeCBackgroundColor #FFFFFF
+skinparam classFontSize 12
+skinparam classAttributeFontSize 11
+
+' ========================================
+' ENTITÉS PRINCIPALES
+' ========================================
+
+package "com.mvc.userservice.entity" {
+
+  abstract class User {
+    + UUID id
+    + UUID keycloakId
+    + String username
+    + UserRole role
+    + String email
+    + String phoneNumber
+    + String fullName
+    + String adresse
+    + int age
+    + LocalDateTime createdAt
+    + LocalDateTime updateAt
+    + KycStatus kycStatus = PENDING
+    + boolean enabled = true
+    --
+    + List<Consent> consentList
+    + List<KycDocument> kycDocuments
+  }
+
+  class Client {
+    + List<Account> accounts
+    + CryptoWallet cryptoWallet
+  }
+
+  class Account {
+    + UUID id
+    + double balance
+    + String currency
+    + String rib
+    + List<Account> beneficiere
+    + List<Transaction> transactions
+  }
+
+  class CryptoWallet {
+    + UUID id
+    + String walletAddress
+    + Double balanceVTC
+    + Double balanceETH
+  }
+
+  abstract class Transaction {
+    + UUID id
+    + Double Montant
+    + LocalDateTime date
+    + TypeTransaction typeTransaction
+  }
+
+  class Virement {
+    + Account Source
+    + Account Destination
+    + String Motife
+    + VirementType typeVirement
+  }
+
+  class Depot {
+    + Account account
+  }
+
+  class Retrait {
+    + Account account
+  }
+
+  class MobileRecharge {
+    + Account account
+    + String phoneNumber
+  }
+
+  class Consent {
+    + UUID id
+    + boolean isOk = true
+    + LocalDateTime grantedAt
+    + LocalDateTime revokedAt
+    + void revoke()
+  }
+
+  class ConsentType {
+    + UUID id
+    + String code
+    + String name
+    + boolean isActive = false
+    + LocalDateTime createdAt
+    + LocalDateTime updatedAt
+    + int nbr = 0
+  }
+
+  class KycDocument {
+    + UUID id
+    + KycDocumentType documentType
+    + KycDocumentStatus status = SUBMITTED
+    + String pathToDocument
+    + LocalDateTime uploadedAt
+    + LocalDateTime reviewedAt
+    + String reviewComment
+  }
+
+  ' Enums
+  enum UserRole {
+    Admin
+    Agent
+    Client
+  }
+
+  enum KycStatus {
+    PENDING
+    IN_REVIEW
+    APPROVED
+    REJECTED
+  }
+
+  enum KycDocumentType {
+    CIN
+    Permis
+    Passport
+    Justificatif_de_domicile
+    Autre
+  }
+
+  enum KycDocumentStatus {
+    SUBMITTED
+    APPROVED
+    UNDER_REVIEW
+    REJECTED
+    EXPIRED
+  }
+
+  enum TypeTransaction {
+    VIREMENT
+    RECHARGE
+    DEPOSIT
+    CRYPTO_SELL
+    CRYPTO_BUY
+  }
+
+  enum VirementType {
+    CLASSIC
+    Instantane
+  }
+}
+
+' ========================================
+' RELATIONS
+' ========================================
+
+User <|-- Client
+
+Client "1" --> "0..*" Account : possède
+Client "1" --> "1" CryptoWallet : possède
+
+Account "1" --> "1" User : appartient à
+
+Account "1" --> "0..*" Account : beneficiere
+Account "1" --> "0..*" Transaction : transactions
+
+User "1" --> "0..*" Consent : consents
+Consent "1" --> "1" ConsentType : type
+
+User "1" --> "0..*" KycDocument : documents
+
+Transaction <|-- Virement
+Transaction <|-- Depot
+Transaction <|-- Retrait
+Transaction <|-- MobileRecharge
+
+Virement "1" --> "1" Account : Source
+Virement "1" --> "1" Account : Destination
+
+Depot "1" --> "1" Account : account
+Retrait "1" --> "1" Account : account
+MobileRecharge "1" --> "1" Account : account
+
+CryptoWallet "1" --> "1" Client : appartient à
+
+note bottom of User
+  Entité centrale liée à Keycloak via keycloakId (sub)
+  Rôle dupliqué localement pour performance
+end note
+
+note bottom of Client
+  Extension de User pour les clients particuliers
+  Possède comptes bancaires et portefeuille crypto
+end note
+
+note bottom of Consent
+  Gestion RGPD complète avec révocation
+end note
+
+note bottom of KycDocument
+  Gestion KYC complète avec statut et commentaires
+end note
+
+@enduml

@@ -7,6 +7,7 @@ import com.mvc.userservice.service.interfaces.IConsentService;
 import com.mvc.userservice.service.interfaces.IConsentTypeService;
 import com.mvc.userservice.service.interfaces.IKycService;
 import com.mvc.userservice.service.interfaces.IUserService;
+import com.mvc.userservice.test.KafkaTestProducer;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -26,26 +27,25 @@ public class UserController {
     private final IKycService kycService;
     private final IConsentService consentService;
     private final IConsentTypeService consentTypeService;
+    private final KafkaTestProducer kafkaTestProducer;
 
 //    Profil user=======v=======================================================================================
 
     @PostMapping("/internal/sync")
     @PreAuthorize("hasRole('Admin')") //adopter pour la secrirte inter service
-    public ResponseEntity<UserResponseDto> syncUser(
-        //    @Valid
-            @RequestBody CreateUserRequestDto dto){
+    public ResponseEntity<UserResponseDto> syncUser(@RequestBody CreateUserRequestDto dto){
         System.out.println("Syncing user with Keycloak ID: " + dto.keycloakId());
         return ResponseEntity.ok(this.userService.createUser(dto));
     }
 
     @GetMapping("/{userId}")
-    @PreAuthorize("hasRole('Admin') or #userId == authentication.principal.attributes.sub")
+    @PreAuthorize("hasRole('Admin') or hasRole('Agent') or #userId == authentication.principal.attributes.sub")
     public ResponseEntity<UserResponseDto> getUser(@PathVariable UUID userId) {
         return ResponseEntity.ok(userService.getUser(userId)); // il me reste pour l'implimetaion
     }
 
     @GetMapping("/allClients")
-    @PreAuthorize("hasRole('Admin')")
+    @PreAuthorize("hasRole('Admin') or hasRole('Agent')")
     public ResponseEntity<List<UserResponseDto>> getAllClients() {
         return ResponseEntity.ok(userService.getAllClients());
     }
@@ -88,7 +88,7 @@ public class UserController {
 
     //UPLOAD D'UN DOCUMENT KYC POUR UN USER
     @PostMapping("/{userId}/kyc/documents")
-    @PreAuthorize("#userId == authentication.principal.attributes.sub")
+    @PreAuthorize(" #userId == authentication.principal.attributes.sub")
     public ResponseEntity<Void> uploadKycDocument(
             @PathVariable UUID userId,
             @RequestParam KycDocumentType documentType,
@@ -161,5 +161,38 @@ public class UserController {
     public ResponseEntity<Void> deleteConsentType(@PathVariable UUID typeId) {
         consentTypeService.deleteConsentType(typeId);
         return ResponseEntity.ok().build();
+    }
+
+//===AFFICHAGE DES AGENTS ==================================================================================================
+
+    //recuperer tous les agents
+    @GetMapping("/allAgents")
+    @PreAuthorize("hasRole('Admin')")
+    public ResponseEntity<List<UserResponseDto>> getAllAgents() {
+        return ResponseEntity.ok(userService.getAllAgents());
+    }
+
+    //SUPPRIMER UN TEL AGENT PAR SON ID
+    @DeleteMapping("/agents/{agentId}" )
+    @PreAuthorize("hasRole('Admin')")
+    public ResponseEntity<Void> deleteAgent(@PathVariable UUID agentId){
+        userService.deleteUser(agentId);
+        return ResponseEntity.ok().build();
+    }
+
+//====TEST DE KAFKKA=============================================================================================
+
+    @GetMapping("/test/kafka-client")
+    @PreAuthorize("hasRole('Admin')")
+    public ResponseEntity<String> testKafkaClient() {
+        kafkaTestProducer.sendTestClientEvent();
+        return ResponseEntity.ok("Événement Client envoyé sur Kafka ! Vérifiez les logs et pgAdmin.");
+    }
+
+    @GetMapping("/test/kafka-agent")
+    @PreAuthorize("hasRole('Admin')")
+    public ResponseEntity<String> testKafkaAgent() {
+        kafkaTestProducer.sendTestAgentEvent();
+        return ResponseEntity.ok("Événement Agent envoyé sur Kafka ! Vérifiez les logs et pgAdmin.");
     }
 }

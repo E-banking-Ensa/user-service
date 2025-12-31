@@ -4,6 +4,7 @@ import com.mvc.userservice.dto.CreateUserRequestDto;
 import com.mvc.userservice.dto.UpdateUserRequestDto;
 import com.mvc.userservice.dto.UserResponseDto;
 import com.mvc.userservice.enums.ConsentType;
+import com.mvc.userservice.enums.UserRole;
 import com.mvc.userservice.service.interfaces.IUserService;
 import com.mvc.userservice.repository.UserRepository;
 import lombok.AllArgsConstructor;
@@ -22,9 +23,27 @@ import java.util.UUID;
 public class UserService implements IUserService {
     private final UserRepository userRepository;
     @Override
+    public boolean deleteUser(UUID userId){
+        if(!this.userRepository.existsById(userId)){
+            return false;
+        }
+        this.userRepository.deleteById(userId);
+        return true;
+    }
+    @Override
     public List<UserResponseDto> getAllClients() {
         List<User> users = userRepository.findAll();
         return users.stream()
+                //filtrer par les users avec un role de CLIENT
+                .filter(user -> user.getRole() == UserRole.Client)
+                .map(UserResponseDto::fromEntity)
+                .toList();
+    }
+    @Override
+    public List<UserResponseDto> getAllAgents(){
+        List<User> users = userRepository.findAll();
+        return users.stream()
+                .filter(user->user.getRole()== UserRole.Agent)
                 .map(UserResponseDto::fromEntity)
                 .toList();
     }

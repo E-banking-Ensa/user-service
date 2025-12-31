@@ -40,7 +40,7 @@ public class User{
     private int age;
     @CreatedDate
     @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private LocalDateTime createdAt=LocalDateTime.now();
     @LastModifiedDate
     @Column(nullable = false)
     private LocalDateTime updateAt;

@@ -20,8 +20,8 @@ public class Account {
     private double balance;
     private String currency;
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id" )
-    private User user;
+    @JoinColumn(name = "client_id" )
+    private Client client;
     @OneToMany
     private List<Account> beneficiere;
     @OneToMany
