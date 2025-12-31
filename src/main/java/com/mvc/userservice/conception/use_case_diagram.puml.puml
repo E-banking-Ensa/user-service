@@ -1,0 +1,149 @@
+@startuml Use Case Diagram - User Service Microservice (Version Finale 2025)
+!theme plain
+skinparam actorStyle awesome
+skinparam backgroundColor #FEFEFE
+skinparam shadowing false
+
+title **Diagramme de Cas d'Utilisation - User Service\nMicroservice E-Banking 3.0 (Aligné sur Implémentation Actuelle)**
+
+' Acteurs
+actor "Client\n(SPA Angular via Gateway GraphQL)" as Client
+actor "Agent Bancaire\n(Espace Agent)" as Agent
+actor "Administrateur\n(Espace Admin & RGPD)" as Admin
+actor "API Gateway GraphQL" as Gateway
+actor "auth-service\n(Keycloak IAM)" as AuthService
+actor "Autres Microservices\n(payment, crypto, analytics...)" as OtherMS
+actor "audit-service\n(Journaux RGPD)" as AuditService
+actor "Kafka Event Bus" as Kafka
+
+' Microservice
+rectangle "User Service Microservice\n(profils, KYC, consentements RGPD)" as UserService {
+
+  ' === USE CASES CLIENT ===
+  usecase "[Consulter profil]\n(GET /users/{id})" as UC_GetProfile
+  usecase "[Mettre à jour profil]\n(PUT /users/{id})" as UC_UpdateProfile
+  usecase "[Consulter consents RGPD]\n(GET /users/{id}/consents)" as UC_GetConsents
+  usecase "[Donner consentement]\n(POST /users/{id}/consents)" as UC_AddConsent
+  usecase "[Révoquer consentement]\n(DELETE /users/{id}/consents/{name})\n<<soft revoke>>" as UC_RevokeConsent
+  usecase "[Consulter documents KYC]\n(GET /users/{id}/kyc/documents)" as UC_GetKycDocs
+  usecase "[Soumettre document KYC]\n(POST /users/{id}/kyc/documents)" as UC_SubmitKycDoc
+
+  ' === USE CASES AGENT / ADMIN ===
+  usecase "[Approuver document KYC]\n(PUT /kyc/documents/{id}/approve)" as UC_ApproveKycDoc
+  usecase "[Rejeter document KYC]\n(PUT /kyc/documents/{id}/reject)" as UC_RejectKycDoc
+
+  ' === USE CASES ADMIN RGPD (ConsentType dynamique) ===
+  usecase "[Lister types de consentement]\n(GET /admin/consent-types)" as UC_ListConsentTypes
+  usecase "[Créer type de consentement]\n(POST /admin/consent-types)" as UC_CreateConsentType
+  usecase "[Activer/Désactiver type]\n(PUT /admin/consent-types/{id}/activate|deactivate)" as UC_ToggleConsentType
+
+  ' === USE CASES INTERNES / SYSTÈME ===
+  usecase "[Synchroniser utilisateur Keycloak]\n(POST /internal/sync + Kafka)" as UC_SyncUser
+  usecase "[Droit à l’oubli RGPD]\n(Anonymisation + revoke all)" as UC_GdprErasure
+  usecase "[Recalcul automatique kycStatus]\n<<système>>" as UC_AutoKycStatus
+  usecase "[Publier événements Kafka]\n(kyc-approved, consent-updated)" as UC_PublishEvents
+}
+
+' === RELATIONS ACTEURS → USE CASES ===
+Client --> UC_GetProfile
+Client --> UC_UpdateProfile
+Client --> UC_GetConsents
+Client --> UC_AddConsent
+Client --> UC_RevokeConsent
+Client --> UC_GetKycDocs
+Client --> UC_SubmitKycDoc
+
+Agent --> UC_GetProfile
+Agent --> UC_GetKycDocs
+Agent --> UC_GetConsents
+Agent --> UC_ApproveKycDoc
+Agent --> UC_RejectKycDoc
+
+Admin --> UC_GetProfile
+Admin --> UC_GetConsents
+Admin --> UC_GetKycDocs
+Admin --> UC_ApproveKycDoc
+Admin --> UC_RejectKycDoc
+Admin --> UC_ListConsentTypes
+Admin --> UC_CreateConsentType
+Admin --> UC_ToggleConsentType
+Admin --> UC_GdprErasure
+
+Gateway --> UC_GetProfile : <<GraphQL>>
+Gateway --> UC_GetConsents
+Gateway --> UC_GetKycDocs
+Gateway --> UC_UpdateProfile
+Gateway --> UC_AddConsent
+Gateway --> UC_SubmitKycDoc
+
+AuthService --> UC_SyncUser : keycloakId + rôle
+
+OtherMS --> UC_GetProfile : vérification KYC/role
+OtherMS --> UC_GetKycDocs
+OtherMS --> UC_GetConsents
+
+' === RELATIONS INTERNES ===
+UC_SubmitKycDoc ..> UC_AutoKycStatus : <<include>>
+UC_ApproveKycDoc ..> UC_AutoKycStatus : <<include>>
+UC_RejectKycDoc ..> UC_AutoKycStatus : <<include>>
+
+UC_AddConsent ..> UC_PublishEvents : <<extend>>
+UC_RevokeConsent ..> UC_PublishEvents : <<extend>>
+UC_ApproveKycDoc ..> UC_PublishEvents : <<extend>>
+
+UC_GdprErasure ..> UC_RevokeConsent : <<include>> (tous)
+UC_GdprErasure ..> AuditService : <<extend>> (logs anonymisés)
+
+' === NOTES DÉTAILLÉES ===
+note right of UC_SyncUser
+  **Interne uniquement**
+  - Reçoit keycloakId (sub du JWT)
+  - Duplique le rôle (ROLE_CLIENT/AGENT/ADMIN)
+  - kycStatus = PENDING
+  - Aucun mot de passe stocké
+  - Via REST interne ou Kafka "user.events"
+end note
+
+note right of UC_CreateConsentType
+  **RGPD Dynamique (votre implémentation)**
+  - Entité ConsentType (code, name, isActive, nbr)
+  - Admin peut ajouter "BIOMETRICS" sans redeploy
+  - nbr incrémenté/décrémenté automatiquement
+  - Relation ManyToOne → instance partagée
+end note
+
+note bottom of UC_AutoKycStatus
+  **Logique automatique (votre code dans KycService)**
+  - Aucun document → PENDING
+  - Tous approuvés → APPROVED
+  - Un rejeté → REJECTED
+  - Sinon → IN_REVIEW
+end note
+
+note left of UC_GdprErasure
+  **Conformité RGPD (cahier des charges)**
+  - Anonymisation des données personnelles
+  - Révocation automatique de tous les consents
+  - Logs vers audit-service
+end note
+
+note top of Kafka
+  **Intégration événementielle**
+  - Consomme : user-created (auth-service)
+  - Publie : kyc-approved, consent-updated/revoked
+end note
+
+note right of Gateway
+  **Façade moderne**
+  - GraphQL agrège user + account + analytics
+  - Requêtes agrégées (ex: userProfile avec consents + kycStatus)
+end note
+
+note bottom
+  **Sécurité : Spring Security + Keycloak**
+  - @PreAuthorize("#userId == authentication.principal.attributes.sub")
+  - hasRole('ADMIN') / hasRole('AGENT')
+  - OAuth2 Resource Server
+end note
+
+@enduml

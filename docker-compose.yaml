@@ -1,0 +1,93 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine  #c'est le nom de service
+    container_name: user-service-postgres
+    environment:
+      POSTGRES_DB: userdb
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: aissam
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d userdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: user-service-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    ports:
+      - "5050:80"
+    depends_on: # depend dans son execution a l'excution de postgres , il attend le demarage de postres
+      - postgres
+    restart: unless-stopped
+  keycloak:
+    image: quay.io/keycloak/keycloak:25.0.6
+    container_name: ebanking-keycloak
+    command: start-dev
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin123
+      KC_DB: dev-file
+      KC_HOSTNAME_STRICT: false
+      KC_HTTP_ENABLED: true
+      KC_LOG_LEVEL: info
+    ports:
+      - "8081:8080"
+    restart: unless-stopped
+    extra_hosts:
+      - "quay.io:185.199.108.133"  # IP GitHub (cache de quay.io)
+
+volumes:
+  postgres_data:
+
+
+
+
+
+#services:
+#  mongodb:
+#    image: 'mongo:latest'
+#    environment:
+#      - 'MONGO_INITDB_DATABASE=mydatabase'
+#      - 'MONGO_INITDB_ROOT_PASSWORD=secret'
+#      - 'MONGO_INITDB_ROOT_USERNAME=root'
+#    ports:
+#      - '27017'
+#  rabbitmq:
+#    image: 'rabbitmq:latest'
+#    environment:
+#      - 'RABBITMQ_DEFAULT_PASS=secret'
+#      - 'RABBITMQ_DEFAULT_USER=myuser'
+#    ports:
+#      - '5672'
+
+
+
+
+
+#quant on fait executer docker compose up , docker compose fait automatiquemnet creer un reseau docker prive
+#et tous les services crees et declares dans ce docker-compose.yaml seront connectes a ce reseau ,
+#et dans ce reseu interne , chaque service peut s'appe;er par son nom(comme un DNS interne) et docker sait bien que
+#pgAdmin a beosin d'accder a la base ,et le conteneur postgres est accessible via le nom de service associe: postgres, en exploitant le port accessible depuis tout
+#Votre ordinateur
+#├── Docker réseau privé (créé par docker-compose)
+#   ├── Conteneur 1 : user-service-postgres
+#   │     → Base userdb (tables users, consents, etc.)
+#   │     → Écoute sur port 5432 (interne)
+#   │
+#   └── Conteneur 2 : user-service-pgadmin
+#         → Interface web sur http://localhost:5050
+#         → Se connecte à "postgres:5432" (nom du service)
+#
+#Votre navigateur → http://localhost:5050 → pgAdmin → parle à postgres via le réseau Docker
+#Votre Spring Boot → jdbc:postgresql://localhost:5432/userdb → parle aussi au même postgres (via le port exposé)

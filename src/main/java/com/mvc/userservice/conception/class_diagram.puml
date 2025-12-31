@@ -1,0 +1,215 @@
+@startuml Diagramme de Classes - User Service Microservice (Version Finale + DTOs)
+
+' Packages
+package "com.mvc.userservice.entity" {
+  class User {
+    - UUID id
+    - UUID keycloakId <<immuable>>
+    - String username <<unique>>
+    - String email <<unique>>
+    - String phoneNumber
+    - String fullName
+    - String adresse
+    - int age
+    - UserRole role
+    - LocalDateTime createdAt
+    - LocalDateTime updatedAt
+    - KycStatus kycStatus
+    - boolean enabled
+    - Long version
+  }
+
+  class Consent {
+    - UUID id
+    - boolean isOk
+    - LocalDateTime grantedAt
+    - LocalDateTime revokedAt
+    --
+    + revoke()
+  }
+
+  class ConsentType {
+    - UUID id
+    - String code <<unique>>
+    - String name <<unique>>
+    - boolean isActive
+    - int nbr <<nombre d'activations>>
+    - LocalDateTime createdAt
+    - LocalDateTime updatedAt
+  }
+
+  class KycDocument {
+    - UUID id
+    - KycDocumentType documentType
+    - KycDocumentStatus status
+    - String pathToDocument
+    - LocalDateTime uploadedAt
+    - LocalDateTime reviewedAt
+    - String reviewComment
+  }
+
+  enum UserRole {
+    ROLE_CLIENT
+    ROLE_AGENT
+    ROLE_ADMIN
+  }
+
+  enum KycStatus {
+    PENDING
+    IN_REVIEW
+    APPROVED
+    REJECTED
+  }
+
+  enum KycDocumentType {
+    CIN
+    Permis
+  }
+
+  enum KycDocumentStatus {
+    SUBMITTED
+    APPROVED
+    UNDER_REVIEW
+    REJECTED
+    EXPIRED
+  }
+}
+
+' === DTOs ajoutés ===
+package "com.mvc.userservice.dto" {
+  record UserResponseDto {
+    + UUID id
+    + UUID keycloakId
+    + String username
+    + String email
+    + String phoneNumber
+    + String adresse
+    + String fullName
+    + KycStatus kycStatus
+    + LocalDateTime createdAt
+    + boolean enabled
+  }
+
+  record CreateUserRequestDto {
+    + UUID keycloakId
+    + String username
+    + String email
+    + int age
+    + String fullName
+    + String phoneNumber
+    + UserRole role
+    + String address
+  }
+
+  record UpdateUserRequestDto {
+    + String fullName
+    + String phoneNumber
+    + String address
+  }
+
+  record ConsentDto {
+    + UUID consentId
+    + String consentType
+    + boolean isOk
+    + LocalDateTime grantedAt
+    + LocalDateTime revokedAt
+  }
+
+  record ConsentTypeDto {
+    + UUID consentTypeId
+    + String code
+    + String name
+    + boolean isActive
+    + int nbr
+    + LocalDateTime grantedAt
+    + LocalDateTime updatedAt
+  }
+
+  record ConsentTypeRequest {
+    + String code
+    + String name
+  }
+
+  record KycDocumentResponseDto {
+    + UUID id
+    + KycDocumentType documentType
+    + KycDocumentStatus status
+    + String pathToDocument
+    + LocalDateTime uploadedAt
+    + LocalDateTime reviewedAt
+    + String reviewComment
+  }
+}
+
+package "com.mvc.userservice.repository" {
+  interface UserRepository <<JpaRepository>>
+  interface ConsentRepository <<JpaRepository>>
+  interface ConsentTypeRepository <<JpaRepository>>
+  interface KycDocumentRepository <<JpaRepository>>
+}
+
+package "com.mvc.userservice.service.interfaces" {
+  interface IUserService
+  interface IKycService
+  interface IConsentService
+  interface IConsentTypeService
+}
+
+package "com.mvc.userservice.service" {
+  class UserService <<@Service>>
+  class KycService <<@Service>>
+  class ConsentService <<@Service>>
+  class ConsentTypeService <<@Service>>
+}
+
+package "com.mvc.userservice.controller" {
+  class UserController <<@RestController>>
+}
+
+' Relations
+User "1" --> "0..*" Consent : consentList
+User "1" --> "0..*" KycDocument : kycDocuments
+
+Consent "many" --> "1" ConsentType : consentType
+
+User --> UserRole : role
+User --> KycStatus : kycStatus
+KycDocument --> KycDocumentType : documentType
+KycDocument --> KycDocumentStatus : status
+
+UserController --> IUserService : utilise
+UserController --> IKycService : utilise
+UserController --> IConsentService : utilise
+UserController --> IConsentTypeService : utilise (admin)
+
+UserService --> UserRepository
+KycService --> KycDocumentRepository
+KycService --> UserRepository
+ConsentService --> ConsentRepository
+ConsentService --> UserRepository
+ConsentService --> ConsentTypeRepository
+ConsentTypeService --> ConsentTypeRepository
+
+note top of User
+  Liaison forte avec Keycloak via keycloakId (sub du JWT)
+  Aucun mot de passe stocké localement
+end note
+
+note right of ConsentType
+  Entité dynamique : types de consentement RGPD
+  gérés par admin (création, activation/désactivation)
+  Champ nbr = compteur d'activations global
+end note
+
+note bottom of KycService
+  Recalcule automatiquement kycStatus de l'utilisateur
+  après chaque modification de document
+end note
+
+note left of UserController
+  Seul controller du microservice
+  Endpoints publics, internes et admin
+  Sécurité via @PreAuthorize + JWT Keycloak
+end note
+
+@enduml

@@ -1,0 +1,204 @@
+@startuml Diagramme détaillé - UserController Endpoints & DTOs (User Service)
+
+skinparam shadowing false
+skinparam backgroundColor #FEFEFE
+skinparam classBackgroundColor #FFFFFF
+skinparam classBorderColor #666666
+skinparam arrowColor #666666
+skinparam monospaceFontName Consolas
+
+package "com.mvc.userservice.controller" {
+  class UserController <<@RestController>> {
+    ' === PROFIL UTILISATEUR ===
+    + @PostMapping("/internal/sync")
+      @PreAuthorize("hasRole('ADMIN') or hasAuthority('SERVICE_AUTH')") // adopter pour la sécurité inter-service
+      public ResponseEntity<UserResponseDto> syncUser(@Valid @RequestBody CreateUserRequestDto dto)
+      - Fonctionnalité: Synchroniser un utilisateur depuis Keycloak (appel interne ou admin)
+      - Entrée: Body → CreateUserRequestDto
+      - Sortie: ResponseEntity<UserResponseDto>
+
+    + @GetMapping("/{userId}")
+      @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.attributes.sub")
+      public ResponseEntity<UserResponseDto> getUser(@PathVariable UUID userId)
+      - Fonctionnalité: Récupérer le profil complet d’un utilisateur
+      - Entrée: Path → userId (UUID)
+      - Sortie: ResponseEntity<UserResponseDto>
+
+    + @PutMapping("/{userId}")
+      @PreAuthorize("#userId == authentication.principal.attributes.sub")
+      public ResponseEntity<UserResponseDto> updateUser(@PathVariable UUID userId, @Valid @RequestBody UpdateUserRequestDto dto)
+      - Fonctionnalité: Mettre à jour les informations personnelles (nom, téléphone, adresse)
+      - Entrée: Path → userId (UUID), Body → UpdateUserRequestDto
+      - Sortie: ResponseEntity<UserResponseDto>
+
+    ' === RGPD - CONSENTS ===
+    + @GetMapping("/{userId}/consents")
+      @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.attributes.sub")
+      public ResponseEntity<List<ConsentDto>> getConsents(@PathVariable UUID userId)
+      - Fonctionnalité: Lister tous les consents RGPD accordés par l’utilisateur
+      - Entrée: Path → userId (UUID)
+      - Sortie: ResponseEntity<List<ConsentDto>>
+
+    + @PostMapping("/{userId}/consents")
+      @PreAuthorize("#userId == authentication.principal.attributes.sub")
+      public ResponseEntity<Void> addConsent(@PathVariable UUID userId, @RequestParam String consentType)
+      - Fonctionnalité: Accorder un nouveau consent RGPD
+      - Entrée: Path → userId (UUID), RequestParam → consentType (String)
+      - Sortie: ResponseEntity<Void>
+
+    + @DeleteMapping("/{userId}/consents/{consentType}")
+      @PreAuthorize("#userId == authentication.principal.attributes.sub")
+      public ResponseEntity<Void> revokeConsent(@PathVariable UUID userId, @PathVariable String consentType)
+      - Fonctionnalité: Révoquer un consent RGPD (marque comme révoqué, pas supprimé)
+      - Entrée: Path → userId (UUID), consentType (String)
+      - Sortie: ResponseEntity<Void>
+
+    ' === KYC ===
+    + @PostMapping("/{userId}/kyc/documents")
+      @PreAuthorize("#userId == authentication.principal.attributes.sub")
+      public ResponseEntity<Void> uploadKycDocument(@PathVariable UUID userId, @RequestParam KycDocumentType documentType, @RequestParam("file") MultipartFile file)
+      - Fonctionnalité: Soumettre un document pour vérification KYC
+      - Entrée: Path → userId (UUID), RequestParam → documentType + file (MultipartFile)
+      - Sortie: ResponseEntity<Void>
+
+    + @GetMapping("/{userId}/kyc/documents")
+      @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.attributes.sub")
+      public ResponseEntity<List<KycDocumentResponseDto>> getKycDocuments(@PathVariable UUID userId)
+      - Fonctionnalité: Lister tous les documents KYC soumis par l’utilisateur
+      - Entrée: Path → userId (UUID)
+      - Sortie: ResponseEntity<List<KycDocumentResponseDto>>
+
+    + @PutMapping("/kyc/documents/{documentId}/approve")
+      @PreAuthorize("hasRole('ADMIN') or hasRole('AGENT')")
+      public ResponseEntity<Void> approveDocument(@PathVariable UUID documentId)
+      - Fonctionnalité: Approuver un document KYC (met à jour le kycStatus global si nécessaire)
+      - Entrée: Path → documentId (UUID)
+      - Sortie: ResponseEntity<Void>
+
+    + @PutMapping("/kyc/documents/{documentId}/reject")
+      @PreAuthorize("hasRole('ADMIN') or hasRole('AGENT')")
+      public ResponseEntity<Void> rejectDocument(@PathVariable UUID documentId, @RequestParam String reason)
+      - Fonctionnalité: Rejeter un document KYC avec motif
+      - Entrée: Path → documentId (UUID), RequestParam → reason (String)
+      - Sortie: ResponseEntity<Void>
+
+    ' === ADMIN - GESTION TYPES CONSENTEMENT ===
+    + @GetMapping("/admin/consent-types")
+      @PreAuthorize("hasRole('ADMIN')")
+      public ResponseEntity<List<ConsentTypeDto>> getAllConsentTypes()
+      - Fonctionnalité: Lister tous les types de consent RGPD disponibles dans le système
+      - Entrée: Aucune
+      - Sortie: ResponseEntity<List<ConsentTypeDto>>
+
+    + @PostMapping("/admin/consent-types")
+      @PreAuthorize("hasRole('ADMIN')")
+      public ResponseEntity<ConsentTypeDto> createConsentType(@Valid @RequestBody ConsentTypeRequest request)
+      - Fonctionnalité: Créer un nouveau type de consent RGPD
+      - Entrée: Body → ConsentTypeRequest
+      - Sortie: ResponseEntity<ConsentTypeDto>
+
+    + @PutMapping("/admin/consent-types/{typeId}/activate")
+      @PreAuthorize("hasRole('ADMIN')")
+      public ResponseEntity<Void> activateConsentType(@PathVariable UUID typeId)
+      - Fonctionnalité: Activer un type de consent (le rendre disponible aux utilisateurs)
+      - Entrée: Path → typeId (UUID)
+      - Sortie: ResponseEntity<Void>
+
+    + @PutMapping("/admin/consent-types/{typeId}/deactivate")
+      @PreAuthorize("hasRole('ADMIN')")
+      public ResponseEntity<Void> deactivateConsentType(@PathVariable UUID typeId)
+      - Fonctionnalité: Désactiver un type de consent
+      - Entrée: Path → typeId (UUID)
+      - Sortie: ResponseEntity<Void>
+
+    + @DeleteMapping("/admin/consent-types/{typeId}")
+      @PreAuthorize("hasRole('ADMIN')")
+      public ResponseEntity<Void> deleteConsentType(@PathVariable UUID typeId)
+      - Fonctionnalité: Supprimer un type de consent (uniquement s'il est inactif et nbr = 0)
+      - Entrée: Path → typeId (UUID)
+      - Sortie: ResponseEntity<Void>
+  }
+}
+
+package "com.mvc.userservice.dto" {
+  record UserResponseDto {
+    + UUID id
+    + UUID keycloakId
+    + String username
+    + String email
+    + String phoneNumber
+    + String adresse
+    + String fullName
+    + KycStatus kycStatus
+    + LocalDateTime createdAt
+    + boolean enabled
+  }
+
+  record CreateUserRequestDto {
+    + UUID keycloakId
+    + String username
+    + String email
+    + int age
+    + String fullName
+    + String phoneNumber
+    + UserRole role
+    + String address
+  }
+
+  record UpdateUserRequestDto {
+    + String fullName
+    + String phoneNumber
+    + String address
+  }
+
+  record ConsentDto {
+    + UUID consentId
+    + String consentType
+    + boolean isOk
+    + LocalDateTime grantedAt
+    + LocalDateTime revokedAt
+  }
+
+  record ConsentTypeDto {
+    + UUID consentTypeId
+    + String code
+    + String name
+    + boolean isActive
+    + int nbr
+    + LocalDateTime grantedAt
+    + LocalDateTime updatedAt
+  }
+
+  record ConsentTypeRequest {
+    + String code
+    + String name
+  }
+
+  record KycDocumentResponseDto {
+    + UUID id
+    + KycDocumentType documentType
+    + KycDocumentStatus status
+    + String pathToDocument
+    + LocalDateTime uploadedAt
+    + LocalDateTime reviewedAt
+    + String reviewComment
+  }
+}
+
+' Relations
+UserController --> UserResponseDto : utilise
+UserController --> CreateUserRequestDto : utilise
+UserController --> UpdateUserRequestDto : utilise
+UserController --> ConsentDto : utilise
+UserController --> ConsentTypeDto : utilise
+UserController --> ConsentTypeRequest : utilise
+UserController --> KycDocumentResponseDto : utilise
+
+note bottom of UserController
+  Base URL: /api/v1/users
+  Sécurité complète via @PreAuthorize + SpEL + JWT Keycloak
+  Validation avec @Valid
+  Support MultipartFile pour upload KYC
+end note
+
+@enduml

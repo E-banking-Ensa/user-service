@@ -1,0 +1,149 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{lmodern}
+\usepackage{geometry}
+\geometry{margin=2cm}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usepackage{tikz-uml}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{\textbf{User Service Microservice}}
+\lhead{E-Banking 3.0}
+\cfoot{Page \thepage\ / \pageref{LastPage}}
+
+\title{\textbf{Documentation Métier et Technique\\Microservice User Service}\\E-Banking 3.0 (Microservices modernes)}
+\author{}
+\date{28 décembre 2025}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{fancy}
+
+\section{Contexte Métier Global du Projet E-Banking 3.0}
+
+Le projet \textbf{E-Banking 3.0} vise à moderniser l'application bancaire existante en adoptant une architecture \textbf{microservices}, avec les objectifs suivants~:
+
+\begin{itemize}
+    \item Améliorer l'\textbf{expérience utilisateur (UX)} grâce à un frontend SPA (Angular) et des requêtes agrégées via \textbf{GraphQL}.
+    \item Découper la plateforme en \textbf{microservices indépendants} pour une meilleure scalabilité et des tests isolés.
+    \item Conserver l'\textbf{interopérabilité} avec les systèmes bancaires legacy via \textbf{SOAP}.
+    \item Ajouter des services innovants~: portefeuille crypto, assistant IA, paiement biométrique, dashboards interactifs.
+    \item Respecter strictement la \textbf{RGPD} (consentements, droit à l'effacement, journaux d'accès).
+\end{itemize}
+
+Le \textbf{microservice user-service} est au cœur de cette architecture~: il gère \textbf{les profils utilisateurs, la vérification d'identité (KYC)} et \textbf{les consentements RGPD}.
+
+\section{Rôle de Chaque Classe / Entité Principale}
+
+\begin{description}
+    \item[User] \hfill \\
+        Entité centrale représentant un utilisateur de la banque (client, agent ou admin).\\
+        \textbf{Rôle~:} Stocker les données personnelles et métier (nom, email, téléphone, adresse, rôle, statut KYC).\\
+        Contient le \texttt{keycloakId} (sub du JWT) pour liaison immuable avec Keycloak (source d'authentification).
+
+    \item[ConsentType] \hfill \\
+        Entité dynamique représentant un \textbf{type de consentement RGPD} (ex. : marketing email, biométrie, partage données).\\
+        \textbf{Rôle~:} Permettre à un administrateur d'ajouter ou désactiver des types de consentement sans redéploiement.\\
+        Champs clés~: \texttt{code}, \texttt{name}, \texttt{isActive}, \texttt{nbr} (compteur d'activations globales).
+
+    \item[Consent] \hfill \\
+        Représente le consentement \textbf{donné par un utilisateur spécifique} pour un type donné.\\
+        \textbf{Rôle~:} Historiser si l'utilisateur a accepté (\texttt{isOk = true}) ou révoqué un consentement.\\
+        Relation ManyToOne avec \texttt{ConsentType} (instances partagées).
+
+    \item[KycDocument] \hfill \\
+        Représente un document soumis dans le cadre de la vérification d'identité (KYC).\\
+        \textbf{Rôle~:} Stocker le type, le statut et le chemin du fichier uploadé.\\
+        Relation OneToMany avec \texttt{User}.
+
+    \item[UserRole] (enum) \hfill \\
+        Définit les rôles possibles~: \texttt{ROLE\_CLIENT}, \texttt{ROLE\_AGENT}, \texttt{ROLE\_ADMIN}.\\
+        Dupliqué depuis Keycloak pour performance et autonomie du service.
+
+    \item[KycStatus] (enum) \hfill \\
+        Statut global KYC de l'utilisateur~: \texttt{PENDING}, \texttt{IN\_REVIEW}, \texttt{APPROVED}, \texttt{REJECTED}.\\
+        Recalculé automatiquement après chaque action sur un document.
+
+    \item[KycDocumentType / KycDocumentStatus] (enums) \hfill \\
+        Types et statuts des documents KYC (ex. : pièce d'identité, selfie, approuvé/rejeté).
+\end{description}
+
+\section{Relations entre les Classes}
+
+\begin{tikzpicture}
+\begin{umlpackage}{com.mvc.userservice.entity}
+    \umlclass[x=0,y=0]{User}{
+        - id : UUID\\
+        - keycloakId : UUID\\
+        - username : String\\
+        - email : String\\
+        - role : UserRole\\
+        - kycStatus : KycStatus\\
+        ...
+    }{
+    }
+
+    \umlclass[x=-5,y=-4]{Consent}{
+        - id : UUID\\
+        - isOk : boolean\\
+        - grantedAt : LocalDateTime\\
+        - revokedAt : LocalDateTime
+    }{
+        + revoke()
+    }
+
+    \umlclass[x=5,y=-4]{KycDocument}{
+        - id : UUID\\
+        - documentType : KycDocumentType\\
+        - status : KycDocumentStatus\\
+        - pathToDocument : String
+    }{
+    }
+
+    \umlclass[x=0,y=-4]{ConsentType}{
+        - id : UUID\\
+        - code : String\\
+        - name : String\\
+        - isActive : boolean\\
+        - nbr : int
+    }{
+    }
+
+    \umlclass[x=0,y=4]{UserRole}{}{}
+    \umlclass[x=5,y=4]{KycStatus}{}{}
+
+    % Relations
+    \umlaggreg[geometry=-|, mult=1]{User}{Consent}
+    \umlaggreg[geometry=-|, mult=1]{User}{KycDocument}
+
+    \umlassoc[geometry=--, mult1=*, mult2=1, anchor1=south, anchor2=north]{Consent}{ConsentType}
+
+    \umlassoc[geometry=--, mult1=1, mult2=1]{User}{UserRole}
+    \umlassoc[geometry=--, mult1=1, mult2=1]{User}{KycStatus}
+
+\end{umlpackage}
+\end{tikzpicture}
+
+\section{Conclusion}
+
+Le microservice \textbf{user-service} respecte pleinement les exigences du projet E-Banking 3.0~:
+\begin{itemize}
+    \item Séparation claire entre authentification (Keycloak) et données métier.
+    \item Gestion dynamique des consentements RGPD.
+    \item Processus KYC robuste avec recalcul automatique.
+    \item Sécurité fine via JWT et rôles dupliqués.
+    \item Prêt pour intégration via API Gateway GraphQL et Kafka.
+\end{itemize}
+
+Ce design garantit scalabilité, maintenabilité et conformité réglementaire.
+
+\end{document}
