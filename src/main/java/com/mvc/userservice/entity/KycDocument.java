@@ -29,8 +29,8 @@ public class KycDocument {
     @Column(nullable = false)
     private KycDocumentStatus status= KycDocumentStatus.SUBMITTED;//l'etat de ce document : soumis , en cours de verification , approuve , refuse
     @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @JoinColumn(name = "client_id", nullable = false)
+    private Client client;
     @Column(nullable = false)
     private String pathToDocument;//c'est le chemin vers le document , peut etre localement
     //bien stcke dans un cloud ...

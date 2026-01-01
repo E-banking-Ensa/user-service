@@ -1,6 +1,8 @@
 package com.mvc.userservice.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.mvc.userservice.enums.KycStatus;
+import com.mvc.userservice.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -12,10 +14,15 @@ import java.util.List;
 @DiscriminatorValue("CLIENT")
 @Data
 public class Client extends User{
-    @OneToMany(mappedBy = "client",fetch = FetchType.LAZY,cascade = CascadeType.ALL,orphanRemoval = true)
-    @JsonIgnore
-    private List<Account> accounts=new ArrayList<>();
-    @OneToOne(mappedBy = "client",cascade = CascadeType.ALL,fetch = FetchType.LAZY,orphanRemoval = true)
-    @JoinColumn(name = "crypto_wallet_id", referencedColumnName = "id")
-    private CryptoWallet cryptoWallet;
+    @Enumerated(EnumType.STRING)
+    //@Column(nullable = false)
+    private KycStatus kycStatus=KycStatus.PENDING;
+    @OneToMany(mappedBy = "client", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    private final List<Consent> consentList=new ArrayList<>();
+    @OneToMany(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<KycDocument> kycDocuments = new ArrayList<>();
+    public Client(){
+        super();
+        this.setRole(UserRole.Client);
+    }
 }

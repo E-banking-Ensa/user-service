@@ -1,10 +1,12 @@
 package com.mvc.userservice.service;
 
 import com.mvc.userservice.dto.KycDocumentResponseDto;
+import com.mvc.userservice.entity.Client;
 import com.mvc.userservice.entity.KycDocument;
 import com.mvc.userservice.enums.KycDocumentStatus;
 import com.mvc.userservice.enums.KycDocumentType;
 import com.mvc.userservice.enums.KycStatus;
+import com.mvc.userservice.repository.ClientRepository;
 import com.mvc.userservice.repository.KycDocumentRepository;
 import com.mvc.userservice.repository.UserRepository;
 import com.mvc.userservice.service.interfaces.IKycService;
@@ -23,6 +25,7 @@ import java.util.UUID;
 public class KycService implements IKycService {
     private final KycDocumentRepository kycDocumentRepository;
     private final UserRepository userRepository;
+    private final ClientRepository clientRepository;
     @Override
     @Transactional
     public boolean submitKeycDocument(UUID userId, KycDocumentType type, MultipartFile file){
@@ -32,9 +35,13 @@ public class KycService implements IKycService {
         if(!this.userRepository.existsById(userId)){
             return false;
         }
-        User user=this.userRepository.findById(userId).orElseThrow();
+        //User user=this.userRepository.findById(userId).orElseThrow();
+        Client user=this.clientRepository.findById(userId).orElseThrow(null);
+        if(user==null){
+            return false;
+        }
         KycDocument document=new KycDocument();
-        document.setUser(user);
+        document.setClient(user);
         document.setDocumentType(type);
         document.setPathToDocument("/path/to/document/"+file.getOriginalFilename());//par la suite on va faire le vrai stockage
         this.kycDocumentRepository.save(document);
@@ -52,7 +59,7 @@ public class KycService implements IKycService {
         KycDocument document=this.kycDocumentRepository.findById(documentId).orElseThrow();
         document.setStatus(KycDocumentStatus.APPROVED);
         this.kycDocumentRepository.save(document);
-        this.updateUserKycStatus(document.getUser());
+        this.updateUserKycStatus(document.getClient());
         return true;
     }
     @Override
@@ -65,7 +72,7 @@ public class KycService implements IKycService {
         document.setStatus(KycDocumentStatus.REJECTED);
         document.setReviewComment(reason);
         this.kycDocumentRepository.save(document);
-        this.updateUserKycStatus(document.getUser());
+        this.updateUserKycStatus(document.getClient());
         return true;
     }
     @Override
@@ -73,7 +80,7 @@ public class KycService implements IKycService {
         if(!this.userRepository.existsById(userId)){
             return List.of();
         }
-        List<KycDocument> documents=this.kycDocumentRepository.findAllByUserId(userId);
+        List<KycDocument> documents=this.kycDocumentRepository.findAllByClientId(userId);
         return documents.stream().map(doc -> new KycDocumentResponseDto(
                 doc.getId(),
                 doc.getDocumentType(),
@@ -84,7 +91,7 @@ public class KycService implements IKycService {
                 doc.getReviewComment()
         )).toList();
     }
-    private void updateUserKycStatus(User user){
+    private void updateUserKycStatus(Client user){
         List<KycDocument> documents=user.getKycDocuments();
         if(!documents.isEmpty()){
             boolean allApproved=documents.stream()

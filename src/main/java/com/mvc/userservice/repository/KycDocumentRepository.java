@@ -9,5 +9,5 @@ import java.util.UUID;
 
 @Repository
 public interface KycDocumentRepository extends JpaRepository<KycDocument,UUID> {
-    List<KycDocument> findAllByUserId(UUID userId);
+    List<KycDocument> findAllByClientId(UUID userId);
 }

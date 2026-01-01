@@ -14,7 +14,7 @@ public record UserResponseDto(UUID id,
                               String phoneNumber,
                               String adresse,
                               String fullName,
-                              KycStatus kycStatus,
+                            //  KycStatus kycStatus,
                               LocalDateTime createdAt,
                               boolean enabled) {
     public static UserResponseDto fromEntity(User user){
@@ -32,7 +32,7 @@ public record UserResponseDto(UUID id,
                 user.getPhoneNumber(),
                 user.getAdresse(),
                 user.getFullName(),
-                user.getKycStatus(),
+                //user.getKycStatus(),
                 user.getCreatedAt(),
 //                consentDtos,
                 user.isEnabled()

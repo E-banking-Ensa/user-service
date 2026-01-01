@@ -22,6 +22,8 @@ import java.util.UUID;
 @AllArgsConstructor
 @Data
 @EntityListeners(AuditingEntityListener.class)
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name = "user_type", discriminatorType = DiscriminatorType.STRING)
 public class User{
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -44,13 +46,6 @@ public class User{
     @LastModifiedDate
     @Column(nullable = false)
     private LocalDateTime updateAt;
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private KycStatus kycStatus=KycStatus.PENDING;
-    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    private final List<Consent> consentList=new ArrayList<>();
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private List<KycDocument> kycDocuments = new ArrayList<>();
     @Column(nullable = false, updatable = true)
-    private boolean enabled=true;//mais apres on verra s'il faut la changer en false par edfaut
+    private boolean enabled=false;//mais apres on verra s'il faut la changer en false par edfaut
 }

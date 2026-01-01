@@ -1,10 +1,12 @@
 package com.mvc.userservice.service;
 
 import com.mvc.userservice.dto.ConsentDto;
+import com.mvc.userservice.entity.Client;
 import com.mvc.userservice.entity.Consent;
 import com.mvc.userservice.entity.ConsentType;
 import com.mvc.userservice.entity.User;
 //import com.mvc.userservice.enums.ConsentType;
+import com.mvc.userservice.repository.ClientRepository;
 import com.mvc.userservice.repository.ConsentRepository;
 import com.mvc.userservice.repository.ConsentTypeRepository;
 import com.mvc.userservice.repository.UserRepository;
@@ -22,14 +24,12 @@ import java.util.UUID;
 @Transactional
 public class ConsentService implements IConsentService {
     private final UserRepository userRepository;
+    private final ClientRepository clientRepository;
     private final ConsentRepository consentRepository;
     private final ConsentTypeRepository consentTypeRepository;
     @Override
     @Transactional
-    public boolean addConsent(UUID userId,
-                            //  ConsentType consentType //c'est plus maintenant enum mais le type de consentement
-                              String consentTypeName
-    ){
+    public boolean addConsent(UUID userId,String consentTypeName) {
         if(!this.userRepository.existsById(userId)){
             return false;
         }
@@ -43,12 +43,16 @@ public class ConsentService implements IConsentService {
         }
         consentType.setNbr(consentType.getNbr()+1);
         this.consentTypeRepository.save(consentType);
-        User user = userRepository.findById(userId).orElseThrow();
+        //User user = userRepository.findById(userId).orElseThrow();
+        Client user = this.clientRepository.findById(userId).orElseThrow(null);
+        if(user==null){
+            return false;
+        }
         boolean exists = user.getConsentList().stream()
                 .anyMatch(c -> c.getConsentType() == consentType);
         if (exists) return false;
         Consent consent = new Consent();
-        consent.setUser(user);
+        consent.setClient(user);
         consent.setConsentType(consentType);
         user.getConsentList().add(consent);
         this.consentRepository.save(consent);
@@ -57,23 +61,24 @@ public class ConsentService implements IConsentService {
     }
     @Override
     @Transactional
-    public boolean deleteConsent(UUID userId,
-                                 //ConsentType consentType
-                                 String consentTypeName){
+    public boolean deleteConsent(UUID userId, String consentTypeName){
         if(!this.userRepository.existsById(userId) || this.consentTypeRepository.findByName(consentTypeName) == null
         ){
             return false;
         }
         ConsentType consentType=this.consentTypeRepository.findByName(consentTypeName);
-        if(this.consentRepository.findByUserIdAndConsentType(userId, consentType)!=null
-        || this.consentRepository.findByUserIdAndConsentType(userId, consentType)==null
+        if(this.consentRepository.findByClientIdAndConsentType(userId, consentType)!=null
+        || this.consentRepository.findByClientIdAndConsentType(userId, consentType)==null
         ){
             return false;
         }
         consentType.setNbr(consentType.getNbr()-1);
         this.consentTypeRepository.save(consentType);
-        Consent consent = this.consentRepository.findByUserIdAndConsentType(userId, consentType);
+        Consent consent = this.consentRepository.findByClientIdAndConsentType(userId, consentType);
         consent.setOk(false);
+        Client client=consent.getClient();
+        client.getConsentList().remove(consent);
+        this.clientRepository.save(client);
         consent.setRevokedAt(LocalDateTime.now());
         this.consentRepository.save(consent);
         return true;
@@ -83,7 +88,7 @@ public class ConsentService implements IConsentService {
         if(!this.userRepository.existsById(userId)){
             return List.of();
         }
-        List<Consent> consents = consentRepository.findAllByUserId(userId);
+        List<Consent> consents = consentRepository.findAllByClientId(userId);
         return consents.stream()
                 .map(ConsentDto::fromEntity)
                 .toList();

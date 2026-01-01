@@ -23,8 +23,8 @@ public class Consent {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id" )
-    private User user;
+    @JoinColumn(name = "client_id" )
+    private Client client;
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "consent_type_id", nullable = false)
     private ConsentType consentType;

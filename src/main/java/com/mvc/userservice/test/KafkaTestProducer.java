@@ -14,9 +14,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Slf4j
 public class KafkaTestProducer {
-
     private final KafkaTemplate<String, UserCreatedEvent> kafkaTemplate;
-
     public void sendTestClientEvent() {
         CreateUserRequestDto dto = new CreateUserRequestDto(
                 UUID.randomUUID(),

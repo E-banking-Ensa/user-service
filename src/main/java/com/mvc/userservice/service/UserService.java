@@ -3,6 +3,9 @@ package com.mvc.userservice.service;
 import com.mvc.userservice.dto.CreateUserRequestDto;
 import com.mvc.userservice.dto.UpdateUserRequestDto;
 import com.mvc.userservice.dto.UserResponseDto;
+import com.mvc.userservice.entity.Admin;
+import com.mvc.userservice.entity.Agent;
+import com.mvc.userservice.entity.Client;
 import com.mvc.userservice.enums.ConsentType;
 import com.mvc.userservice.enums.UserRole;
 import com.mvc.userservice.service.interfaces.IUserService;
@@ -55,7 +58,20 @@ public class UserService implements IUserService {
         if (userRepository.existsByUsername(dto.username())) {
             throw new IllegalArgumentException("Username déjà utilisé");
         }
-        User user = new User();
+        User user ;
+        if (dto.role() == UserRole.Client) {
+            user = new Client();
+            // Le constructeur de Client force déjà role = CLIENT et kycStatus = PENDING
+        }
+        else if (dto.role() == UserRole.Agent) {
+            user = new Agent();
+        }
+        else if (dto.role() == UserRole.Admin) {
+            user = new Admin();
+        }
+        else {
+            throw new IllegalArgumentException("Rôle inconnu");
+        }
         user.setKeycloakId(dto.keycloakId());
         user.setUsername(dto.username());
         user.setEmail(dto.email());

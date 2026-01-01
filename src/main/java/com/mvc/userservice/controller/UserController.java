@@ -3,10 +3,7 @@ package com.mvc.userservice.controller;
 import com.mvc.userservice.dto.*;
 import com.mvc.userservice.entity.ConsentType;
 import com.mvc.userservice.enums.KycDocumentType;
-import com.mvc.userservice.service.interfaces.IConsentService;
-import com.mvc.userservice.service.interfaces.IConsentTypeService;
-import com.mvc.userservice.service.interfaces.IKycService;
-import com.mvc.userservice.service.interfaces.IUserService;
+import com.mvc.userservice.service.interfaces.*;
 import com.mvc.userservice.test.KafkaTestProducer;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -28,11 +25,12 @@ public class UserController {
     private final IConsentService consentService;
     private final IConsentTypeService consentTypeService;
     private final KafkaTestProducer kafkaTestProducer;
+    private final IClientService clientService;
 
 //    Profil user=======v=======================================================================================
 
     @PostMapping("/internal/sync")
-    @PreAuthorize("hasRole('Admin')") //adopter pour la secrirte inter service
+    @PreAuthorize("hasRole('Admin') or hasRole('Agent')") //adopter pour la secrirte inter service
     public ResponseEntity<UserResponseDto> syncUser(@RequestBody CreateUserRequestDto dto){
         System.out.println("Syncing user with Keycloak ID: " + dto.keycloakId());
         return ResponseEntity.ok(this.userService.createUser(dto));
@@ -44,16 +42,21 @@ public class UserController {
         return ResponseEntity.ok(userService.getUser(userId)); // il me reste pour l'implimetaion
     }
 
-    @GetMapping("/allClients")
-    @PreAuthorize("hasRole('Admin') or hasRole('Agent')")
-    public ResponseEntity<List<UserResponseDto>> getAllClients() {
-        return ResponseEntity.ok(userService.getAllClients());
+    @GetMapping("/client/{clientId}")//retourner un tel client precimenet
+    @PreAuthorize("hasRole('Admin') or hasRole('Agent') or #clientId == authentication.principal.attributes.sub")
+    public ResponseEntity<ClientDto> getClientById(@PathVariable UUID clientId) {
+        return ResponseEntity.ok(this.clientService.getClientById(clientId));
     }
 
-    @PutMapping("/{userId}")
+    @GetMapping("/allClients")
+    @PreAuthorize("hasRole('Admin') or hasRole('Agent')")
+    public List<ClientDto> getAllClients() {
+        return this.clientService.getAllClients();
+    }
+
+    @PutMapping("/{userId}")//retourner un tel user
     @PreAuthorize("#userId == authentication.principal.attributes.sub")
-    public ResponseEntity<UserResponseDto> updateUser(
-            @PathVariable UUID userId,@Valid @RequestBody UpdateUserRequestDto dto) {
+    public ResponseEntity<UserResponseDto> updateUser(@PathVariable UUID userId,@Valid @RequestBody UpdateUserRequestDto dto) {
         return ResponseEntity.ok(userService.updateUser(userId, dto));
     }
 
@@ -69,8 +72,7 @@ public class UserController {
     //AJOUTER UN CONSENTEMENT RGPD POUR UN USER
     @PostMapping("/{userId}/consents")
     @PreAuthorize("#userId == authentication.principal.attributes.sub")
-    public ResponseEntity<Void> addConsent(
-            @PathVariable UUID userId,@RequestParam String consentType){
+    public ResponseEntity<Void> addConsent(@PathVariable UUID userId,@RequestParam String consentType){
         consentService.addConsent(userId, consentType);
         return ResponseEntity.ok().build();
     }
