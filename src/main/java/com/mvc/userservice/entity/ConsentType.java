@@ -28,7 +28,7 @@ public class ConsentType {
     private boolean isActive=false;//indique par admin s'il est actve et propose chez les clients ou non
     @CreatedDate
     @Column(nullable=false,updatable=false)
-    private LocalDateTime createdAt;
+    private LocalDateTime createdAt=LocalDateTime.now();
     @LastModifiedDate
     @Column(nullable=false)
     private LocalDateTime updatedAt;

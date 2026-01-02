@@ -27,7 +27,8 @@ public class ConsentTypeService implements IConsentTypeService {
     public ConsentType create(ConsentTypeRequest request){
         ConsentType consentType = new ConsentType();
         consentType.setCode(request.code());
-        consentType.setActive(true);
+        consentType.setName(request.name());
+        consentType.setActive(false);
         return consentTypeRepository.save(consentType);
     }
     @Override

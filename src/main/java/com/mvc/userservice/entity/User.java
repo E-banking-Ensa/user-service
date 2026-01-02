@@ -1,5 +1,6 @@
 package com.mvc.userservice.entity;
 
+import com.mvc.userservice.enums.Status;
 import com.mvc.userservice.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -25,8 +26,8 @@ public class User{
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
-    @Column(nullable = false , unique = true)
-    private UUID keycloakId;// ← UUID immuable venant de Keycloak (le "sub"), c'est a dire c'est la seule laison avec keycloak
+//    @Column(nullable = false , unique = true)
+//    private UUID keycloakId;// ← UUID immuable venant de Keycloak (le "sub"), c'est a dire c'est la seule laison avec keycloak
     @Column(unique = true, nullable = false)
     private String username;
     @Column(name = "role")
@@ -34,7 +35,8 @@ public class User{
     @Column(unique = true, nullable = false)
     private String email;
     private String phoneNumber;
-    private String fullName;
+    private String firstName;
+    private String lastName;
     private String adresse;
     private int age;
     @CreatedDate
@@ -43,6 +45,7 @@ public class User{
     @LastModifiedDate
     @Column(nullable = false)
     private LocalDateTime updateAt;
-    @Column(nullable = false, updatable = true)
-    private boolean enabled=false;//mais apres on verra s'il faut la changer en false par edfaut
+//    @Column(nullable = false, updatable = true)
+//    private boolean enabled=true;//mais apres on verra s'il faut la changer en false par edfaut
+    private Status status=Status.ACTIVE;
 }

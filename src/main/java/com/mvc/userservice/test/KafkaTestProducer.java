@@ -17,11 +17,12 @@ public class KafkaTestProducer {
     private final KafkaTemplate<String, UserCreatedEvent> kafkaTemplate;
     public void sendTestClientEvent() {
         CreateUserRequestDto dto = new CreateUserRequestDto(
-                UUID.randomUUID(),
+//                UUID.randomUUID(),
                 "clientkafka",
                 "clientkafka@ebank.com",
                 28,
-                "Client Kafka Test",
+                "Client Kafka firstname",
+                "Client Kafka lastname",
                 "+33698765432",
                 UserRole.Client,
                 "456 Avenue Test, Lyon"
@@ -34,11 +35,12 @@ public class KafkaTestProducer {
 
     public void sendTestAgentEvent() {
         CreateUserRequestDto dto = new CreateUserRequestDto(
-                UUID.randomUUID(),
+//                UUID.randomUUID(),
                 "agentkafka",
                 "agentkafka@ebank.com",
                 35,
                 "Agent Kafka Test",
+                "Agent Kafka Lastname",
                 "+33611112222",
                 UserRole.Agent,
                 "Agence Centre Ville"

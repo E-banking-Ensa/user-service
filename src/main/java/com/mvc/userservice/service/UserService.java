@@ -71,12 +71,12 @@ public class UserService implements IUserService {
         else {
             throw new IllegalArgumentException("Rôle inconnu");
         }
-        user.setKeycloakId(dto.keycloakId());
+//        user.setKeycloakId(dto.keycloakId());
         user.setUsername(dto.username());
         user.setEmail(dto.email());
         user.setRole(dto.role());
         user.setPhoneNumber(dto.phoneNumber());
-        user.setFullName(dto.fullName());
+
         user.setAdresse(dto.address());
         this.userRepository.save(user);
         return UserResponseDto.fromEntity(user);
@@ -87,8 +87,14 @@ public class UserService implements IUserService {
             throw new IllegalArgumentException("User not found");
         }
         User user = this.userRepository.findById(userId).orElse(null);
-        if(dto.fullName()!=null){
-            user.setFullName(dto.fullName());
+        if(user==null){
+            throw new IllegalArgumentException("User not found");
+        }
+        if(dto.firstName()!=null){
+            user.setFirstName(dto.firstName());
+        }
+        if(dto.lastName()!=null){
+            user.setLastName(dto.lastName());
         }
         if(dto.phoneNumber()!=null){
             user.setPhoneNumber(dto.phoneNumber());

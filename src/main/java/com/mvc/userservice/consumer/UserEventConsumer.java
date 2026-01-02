@@ -19,7 +19,7 @@ public class UserEventConsumer {
     public void handleUserCreated(UserCreatedEvent event) {
         CreateUserRequestDto dto = event.dto();
 
-        log.info("Événement Kafka reçu : création utilisateur {} (Keycloak ID: {})", dto.username(), dto.keycloakId());
+        log.info("Événement Kafka reçu : création utilisateur {} (Keycloak ID: {})", dto.username());
 
         try {
             userService.createUser(dto);

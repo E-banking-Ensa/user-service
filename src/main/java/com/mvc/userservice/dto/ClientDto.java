@@ -2,34 +2,37 @@ package com.mvc.userservice.dto;
 
 import com.mvc.userservice.entity.Client;
 import com.mvc.userservice.enums.KycStatus;
+import com.mvc.userservice.enums.Status;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 public record ClientDto(
         UUID clientId,
-        UUID keycloakId,
+//        UUID keycloakId,
         String username,
         String email,
         String phoneNumber,
         String adresse,
-        String fullName,
+        String firstName,
+        String lastName,
         KycStatus kycStatus,
         LocalDateTime createdAt,
-        boolean enabled
+        Status status
 ) {
     public static ClientDto fromEntity(Client client){
             return new ClientDto(
                     client.getId(),
-                    client.getKeycloakId(),
+//                    client.getKeycloakId(),
                     client.getUsername(),
                     client.getEmail(),
                     client.getPhoneNumber(),
                     client.getAdresse(),
-                    client.getFullName(),
+                    client.getFirstName(),
+                    client.getLastName(),
                     client.getKycStatus(),
                     client.getCreatedAt(),
-                    client.isEnabled()
+                    client.getStatus()
             );
     }
 }

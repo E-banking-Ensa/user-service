@@ -17,7 +17,7 @@ import java.util.UUID;
 
 @RestController
 @AllArgsConstructor
-//@NoArgsConstructor
+@CrossOrigin("http://localhost:4200")
 @RequestMapping("/api/v1/users")
 public class UserController {
     private final IUserService userService;
@@ -26,36 +26,44 @@ public class UserController {
     private final IConsentTypeService consentTypeService;
     private final KafkaTestProducer kafkaTestProducer;
     private final IClientService clientService;
+    private final IAgentService agentService;
+    private final IDashbordService dashbordService;
 
 //    Profil user=======v=======================================================================================
 
+    @GetMapping("/admin/dash")
+    public ResponseEntity<DashbordAdmin> getAdminDashbord(){
+        return ResponseEntity.ok(this.dashbordService.getDashbordAdmin());
+    }
+
     @PostMapping("/internal/sync")
-    @PreAuthorize("hasRole('Admin') or hasRole('Agent')") //adopter pour la secrirte inter service
+   // @PreAuthorize("hasRole('Admin') or hasRole('Agent')") //adopter pour la secrirte inter service
     public ResponseEntity<UserResponseDto> syncUser(@RequestBody CreateUserRequestDto dto){
-        System.out.println("Syncing user with Keycloak ID: " + dto.keycloakId());
+//        System.out.println("Syncing user with Keycloak ID: " + dto.keycloakId());
         return ResponseEntity.ok(this.userService.createUser(dto));
     }
 
     @GetMapping("/{userId}")//retourner un tel user
-    @PreAuthorize("hasRole('Admin') or hasRole('Agent') or #userId == authentication.principal.attributes.sub")
+   // @PreAuthorize("hasRole('Admin') or hasRole('Agent') or #userId == authentication.principal.attributes.sub")
     public ResponseEntity<UserResponseDto> getUser(@PathVariable UUID userId) {
         return ResponseEntity.ok(userService.getUser(userId)); // il me reste pour l'implimetaion
     }
 
     @GetMapping("/client/{clientId}")//retourner un tel client precimenet
-    @PreAuthorize("hasRole('Admin') or hasRole('Agent') or #clientId == authentication.principal.attributes.sub")
+   // @PreAuthorize("hasRole('Admin') or hasRole('Agent') or #clientId == authentication.principal.attributes.sub")
     public ResponseEntity<ClientDto> getClientById(@PathVariable UUID clientId) {
         return ResponseEntity.ok(this.clientService.getClientById(clientId));
     }
 
     @GetMapping("/allClients")//retourner tous les clients
-    @PreAuthorize("hasRole('Admin') or hasRole('Agent')")
+   // @PreAuthorize("hasRole('Admin') or hasRole('Agent')")
     public List<ClientDto> getAllClients() {
+        System.out.println("Fetching all clients");
         return this.clientService.getAllClients();
     }
 
     @PutMapping("/{userId}")//faire update d'un tel user
-    @PreAuthorize("#userId == authentication.principal.attributes.sub")
+    //@PreAuthorize("#userId == authentication.principal.attributes.sub")
     public ResponseEntity<UserResponseDto> updateUser(@PathVariable UUID userId,@Valid @RequestBody UpdateUserRequestDto dto) {
         return ResponseEntity.ok(userService.updateUser(userId, dto));
     }
@@ -125,22 +133,25 @@ public class UserController {
 
     //recuperer tous les types de consentement
     @GetMapping("/admin/consent-types")
-    @PreAuthorize("hasRole('Admin')")
+    //@PreAuthorize("hasRole('Admin')")
     public ResponseEntity<List<ConsentTypeDto>> getAllConsentTypes() {
+        System.out.println("Getting all consent types");
         return ResponseEntity.ok(this.consentTypeService.getAllConsentTypes());
     }
 
     //creer un type de consentement
     @PostMapping("/admin/consent-types")
-    @PreAuthorize("hasRole('Admin')")
+    //@PreAuthorize("hasRole('Admin')")
     public ResponseEntity<ConsentTypeDto> createConsentType(@Valid @RequestBody ConsentTypeRequest request) {
+        System.out.println("Creating consent type: " + request.name());
+        System.out.println("Description: " + request.code());
         ConsentType created = consentTypeService.create(request);
         return ResponseEntity.ok(ConsentTypeDto.fromEntity(created));
     }
 
     //activer un type de consentement
     @PutMapping("/admin/consent-types/{typeId}/activate")
-    @PreAuthorize("hasRole('Admin')")
+    //@PreAuthorize("hasRole('Admin')")
     public ResponseEntity<Void> activateConsentType(@PathVariable UUID typeId) {
         if (consentTypeService.activateConsentType(typeId)) {
             return ResponseEntity.ok().build();
@@ -150,7 +161,7 @@ public class UserController {
 
     //desactiver un type de consentement
     @PutMapping("/admin/consent-types/{typeId}/deactivate")
-    @PreAuthorize("hasRole('Admin')")
+    //@PreAuthorize("hasRole('Admin')")
     public ResponseEntity<Void> deactivateConsentType(@PathVariable UUID typeId) {
         if (consentTypeService.deactivateConsentType(typeId)) {
             return ResponseEntity.ok().build();
@@ -160,7 +171,7 @@ public class UserController {
 
     // Optionnel : suppression douce si aucun utilisateur ne l'utilise
     @DeleteMapping("/admin/consent-types/{typeId}")
-    @PreAuthorize("hasRole('Admin')")
+    //@PreAuthorize("hasRole('Admin')")
     public ResponseEntity<Void> deleteConsentType(@PathVariable UUID typeId) {
         consentTypeService.deleteConsentType(typeId);
         return ResponseEntity.ok().build();
@@ -170,9 +181,10 @@ public class UserController {
 
     //recuperer tous les agents
     @GetMapping("/allAgents")
-    @PreAuthorize("hasRole('Admin')")
-    public ResponseEntity<List<UserResponseDto>> getAllAgents() {
-        return ResponseEntity.ok(userService.getAllAgents());
+    //@PreAuthorize("hasRole('Admin')")
+    public ResponseEntity<List<AgentDto>> getAllAgents() {
+        System.out.println("Fetching all agents");
+        return ResponseEntity.ok(this.agentService.getAllAgents());
     }
 
     //SUPPRIMER UN TEL AGENT PAR SON ID
@@ -180,6 +192,30 @@ public class UserController {
     @PreAuthorize("hasRole('Admin')")
     public ResponseEntity<Void> deleteAgent(@PathVariable UUID agentId){
         userService.deleteUser(agentId);
+        return ResponseEntity.ok().build();
+    }
+
+    //ACTIVER UN TEL AGENT PAR SON ID
+    @PutMapping("/agents/{agentId}/activate")
+    @PreAuthorize("hasRole('Admin')")
+    public ResponseEntity<Void> activateAgent(@PathVariable UUID agentId){
+        this.agentService.activate(agentId);
+        return ResponseEntity.ok().build();
+    }
+
+    //DESACTIVER UN TEL AGENT PAR SON ID
+    @PutMapping("/agents/{agentId}/deactivate")
+    @PreAuthorize("hasRole('Admin')")
+    public ResponseEntity<Void> deactivateAgent(@PathVariable UUID agentId){
+        this.agentService.deactivate(agentId);
+        return ResponseEntity.ok().build();
+    }
+
+    //BLOQUER UN TEL AGENT PAR SON ID
+    @PutMapping("/agents/{agentId}/block")
+    @PreAuthorize("hasRole('Admin')")
+    public ResponseEntity<Void> blockAgent(@PathVariable UUID agentId){
+        this.agentService.block(agentId);
         return ResponseEntity.ok().build();
     }
 

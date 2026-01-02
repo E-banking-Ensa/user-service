@@ -8,11 +8,12 @@ import jakarta.validation.constraints.NotNull;
 import java.util.UUID;
 
 public record CreateUserRequestDto(
-                                   @NotNull UUID keycloakId,
+//                                   @NotNull UUID keycloakId,
                                    @NotBlank String username,
                                    @NotBlank @Email String email,
                                    int age,
-                                   @NotBlank String fullName,
+                                   @NotBlank String firstName,
+                                   @NotBlank String lastName,
                                    @NotBlank String phoneNumber,
                                    @NotBlank UserRole role,
                                    String address) {

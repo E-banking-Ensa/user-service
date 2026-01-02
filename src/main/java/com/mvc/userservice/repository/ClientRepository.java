@@ -8,4 +8,6 @@ import java.util.UUID;
 
 public interface ClientRepository extends JpaRepository<Client, UUID> {
     Optional<Client> findById(UUID id);
+    //retourner le nombre des clients
+    long count();
 }

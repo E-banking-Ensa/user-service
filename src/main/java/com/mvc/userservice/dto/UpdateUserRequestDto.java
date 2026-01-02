@@ -1,7 +1,8 @@
 package com.mvc.userservice.dto;
 
 public record UpdateUserRequestDto(
-        String fullName,
+        String firstName,
+        String lastName,
         String phoneNumber,
         String address
 ) {
