@@ -1,6 +1,5 @@
 package com.mvc.userservice.entity;
 
-import com.mvc.userservice.enums.KycStatus;
 import com.mvc.userservice.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -12,8 +11,6 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 @Entity

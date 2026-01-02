@@ -36,7 +36,7 @@ public class UserController {
         return ResponseEntity.ok(this.userService.createUser(dto));
     }
 
-    @GetMapping("/{userId}")
+    @GetMapping("/{userId}")//retourner un tel user
     @PreAuthorize("hasRole('Admin') or hasRole('Agent') or #userId == authentication.principal.attributes.sub")
     public ResponseEntity<UserResponseDto> getUser(@PathVariable UUID userId) {
         return ResponseEntity.ok(userService.getUser(userId)); // il me reste pour l'implimetaion
@@ -48,13 +48,13 @@ public class UserController {
         return ResponseEntity.ok(this.clientService.getClientById(clientId));
     }
 
-    @GetMapping("/allClients")
+    @GetMapping("/allClients")//retourner tous les clients
     @PreAuthorize("hasRole('Admin') or hasRole('Agent')")
     public List<ClientDto> getAllClients() {
         return this.clientService.getAllClients();
     }
 
-    @PutMapping("/{userId}")//retourner un tel user
+    @PutMapping("/{userId}")//faire update d'un tel user
     @PreAuthorize("#userId == authentication.principal.attributes.sub")
     public ResponseEntity<UserResponseDto> updateUser(@PathVariable UUID userId,@Valid @RequestBody UpdateUserRequestDto dto) {
         return ResponseEntity.ok(userService.updateUser(userId, dto));
@@ -123,12 +123,14 @@ public class UserController {
 
 // =================================== ADMIN : GESTION DES TYPES DE CONSENTEMENT ===================================
 
+    //recuperer tous les types de consentement
     @GetMapping("/admin/consent-types")
     @PreAuthorize("hasRole('Admin')")
     public ResponseEntity<List<ConsentTypeDto>> getAllConsentTypes() {
         return ResponseEntity.ok(this.consentTypeService.getAllConsentTypes());
     }
 
+    //creer un type de consentement
     @PostMapping("/admin/consent-types")
     @PreAuthorize("hasRole('Admin')")
     public ResponseEntity<ConsentTypeDto> createConsentType(@Valid @RequestBody ConsentTypeRequest request) {
@@ -136,6 +138,7 @@ public class UserController {
         return ResponseEntity.ok(ConsentTypeDto.fromEntity(created));
     }
 
+    //activer un type de consentement
     @PutMapping("/admin/consent-types/{typeId}/activate")
     @PreAuthorize("hasRole('Admin')")
     public ResponseEntity<Void> activateConsentType(@PathVariable UUID typeId) {
@@ -145,6 +148,7 @@ public class UserController {
         return ResponseEntity.badRequest().build();
     }
 
+    //desactiver un type de consentement
     @PutMapping("/admin/consent-types/{typeId}/deactivate")
     @PreAuthorize("hasRole('Admin')")
     public ResponseEntity<Void> deactivateConsentType(@PathVariable UUID typeId) {
@@ -178,6 +182,11 @@ public class UserController {
         userService.deleteUser(agentId);
         return ResponseEntity.ok().build();
     }
+
+//
+//    @PostMapping("/create/agent")
+//    @PreAuthorize("hasRole('Admin')")
+//    public
 
 //====TEST DE KAFKKA=============================================================================================
 

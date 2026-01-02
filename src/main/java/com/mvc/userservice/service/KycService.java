@@ -35,7 +35,6 @@ public class KycService implements IKycService {
         if(!this.userRepository.existsById(userId)){
             return false;
         }
-        //User user=this.userRepository.findById(userId).orElseThrow();
         Client user=this.clientRepository.findById(userId).orElseThrow(null);
         if(user==null){
             return false;
@@ -91,7 +90,7 @@ public class KycService implements IKycService {
                 doc.getReviewComment()
         )).toList();
     }
-    private void updateUserKycStatus(Client user){
+    private synchronized void updateUserKycStatus(Client user){
         List<KycDocument> documents=user.getKycDocuments();
         if(!documents.isEmpty()){
             boolean allApproved=documents.stream()

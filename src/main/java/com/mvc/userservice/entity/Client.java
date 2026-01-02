@@ -15,7 +15,6 @@ import java.util.List;
 @Data
 public class Client extends User{
     @Enumerated(EnumType.STRING)
-    //@Column(nullable = false)
     private KycStatus kycStatus=KycStatus.PENDING;
     @OneToMany(mappedBy = "client", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private final List<Consent> consentList=new ArrayList<>();

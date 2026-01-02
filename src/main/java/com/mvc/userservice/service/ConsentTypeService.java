@@ -53,6 +53,7 @@ public class ConsentTypeService implements IConsentTypeService {
     public boolean activateConsentType(UUID id){
         ConsentType consentType = consentTypeRepository.findById(id).orElse(null);
         if(consentType==null || consentType.isActive()){
+            System.out.println("here");
             return false;
         }
         consentType.setActive(true);
@@ -63,6 +64,7 @@ public class ConsentTypeService implements IConsentTypeService {
     public  boolean deactivateConsentType(UUID id){
         ConsentType consentType = consentTypeRepository.findById(id).orElse(null);
         if(consentType==null || !consentType.isActive()){
+            System.out.println("here");
             return false;
         }
         consentType.setActive(false);

@@ -4,8 +4,6 @@ import com.mvc.userservice.dto.ConsentDto;
 import com.mvc.userservice.entity.Client;
 import com.mvc.userservice.entity.Consent;
 import com.mvc.userservice.entity.ConsentType;
-import com.mvc.userservice.entity.User;
-//import com.mvc.userservice.enums.ConsentType;
 import com.mvc.userservice.repository.ClientRepository;
 import com.mvc.userservice.repository.ConsentRepository;
 import com.mvc.userservice.repository.ConsentTypeRepository;

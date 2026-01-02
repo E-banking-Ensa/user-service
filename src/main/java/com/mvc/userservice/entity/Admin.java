@@ -8,8 +8,6 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @DiscriminatorValue("ADMIN")
-//@AllArgsConstructor
-//@NoArgsConstructor
 public class Admin extends User{
     public Admin(){
         super();

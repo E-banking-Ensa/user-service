@@ -6,7 +6,6 @@ import jakarta.persistence.Entity;
 
 @Entity
 @DiscriminatorValue("AGENT")
-//@AllArgsConstructor
 public class Agent extends User{
     public Agent(){
         super();
