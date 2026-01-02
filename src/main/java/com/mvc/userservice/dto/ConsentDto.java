@@ -1,7 +1,6 @@
 package com.mvc.userservice.dto;
 
 import com.mvc.userservice.entity.Consent;
-import com.mvc.userservice.enums.ConsentType;
 
 import java.time.LocalDateTime;
 import java.util.UUID;

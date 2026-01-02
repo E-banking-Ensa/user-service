@@ -92,8 +92,7 @@ public class UserController {
     @PostMapping("/{userId}/kyc/documents")
     @PreAuthorize(" #userId == authentication.principal.attributes.sub")
     public ResponseEntity<Void> uploadKycDocument(
-            @PathVariable UUID userId,
-            @RequestParam KycDocumentType documentType,
+            @PathVariable UUID userId, @RequestParam KycDocumentType documentType,
             @RequestParam("file") MultipartFile file) {
         kycService.submitKeycDocument(userId, documentType, file);
         return ResponseEntity.ok().build();
@@ -117,9 +116,7 @@ public class UserController {
     //REJETER UN DOCUMENT KYC , MAIS C'EST AUTORISE PAR ADMIN OU AGENT
     @PutMapping("/kyc/documents/{documentId}/reject")
     @PreAuthorize("hasRole('Admin') or hasRole('Agent')")
-    public ResponseEntity<Void> rejectDocument(
-            @PathVariable UUID documentId,
-            @RequestParam String reason) {
+    public ResponseEntity<Void> rejectDocument(@PathVariable UUID documentId, @RequestParam String reason) {
         kycService.rejectKycDocument(documentId, reason);
         return ResponseEntity.ok().build();
     }

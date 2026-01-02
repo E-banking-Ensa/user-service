@@ -6,7 +6,6 @@ import com.mvc.userservice.dto.UserResponseDto;
 import com.mvc.userservice.entity.Admin;
 import com.mvc.userservice.entity.Agent;
 import com.mvc.userservice.entity.Client;
-import com.mvc.userservice.enums.ConsentType;
 import com.mvc.userservice.enums.UserRole;
 import com.mvc.userservice.service.interfaces.IUserService;
 import com.mvc.userservice.repository.UserRepository;

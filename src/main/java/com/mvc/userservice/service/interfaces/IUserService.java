@@ -3,7 +3,6 @@ package com.mvc.userservice.service.interfaces;
 import com.mvc.userservice.dto.CreateUserRequestDto;
 import com.mvc.userservice.dto.UpdateUserRequestDto;
 import com.mvc.userservice.dto.UserResponseDto;
-import com.mvc.userservice.enums.ConsentType;
 
 import java.util.List;
 import java.util.UUID;
