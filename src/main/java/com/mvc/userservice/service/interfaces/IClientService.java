@@ -9,4 +9,6 @@ import java.util.UUID;
 public interface IClientService {
     List<ClientDto> getAllClients();
     ClientDto getClientById(UUID id);
+    boolean activate(UUID id);
+    boolean deactivate(UUID id);
 }

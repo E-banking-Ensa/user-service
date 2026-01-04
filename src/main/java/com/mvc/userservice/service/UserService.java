@@ -11,8 +11,6 @@ import com.mvc.userservice.service.interfaces.IUserService;
 import com.mvc.userservice.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import com.mvc.userservice.entity.User;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -58,26 +56,26 @@ public class UserService implements IUserService {
             throw new IllegalArgumentException("Username déjà utilisé");
         }
         User user ;
-        if (dto.role() == UserRole.Client) {
+        if (dto.role().equals(UserRole.Client.name())) {
             user = new Client();
             // Le constructeur de Client force déjà role = CLIENT et kycStatus = PENDING
         }
-        else if (dto.role() == UserRole.Agent) {
+        else if (dto.role().equals(UserRole.Agent.name())) {
             user = new Agent();
         }
-        else if (dto.role() == UserRole.Admin) {
+        else if (dto.role().equals(UserRole.Admin.name())) {
             user = new Admin();
         }
         else {
             throw new IllegalArgumentException("Rôle inconnu");
         }
-//        user.setKeycloakId(dto.keycloakId());
         user.setUsername(dto.username());
         user.setEmail(dto.email());
-        user.setRole(dto.role());
         user.setPhoneNumber(dto.phoneNumber());
-
-        user.setAdresse(dto.address());
+        user.setAdresse(dto.adresse());
+        user.setLastName(dto.lastName());
+        user.setFirstName(dto.firstName());
+        System.out.println("voila ici");
         this.userRepository.save(user);
         return UserResponseDto.fromEntity(user);
     }
@@ -89,6 +87,9 @@ public class UserService implements IUserService {
         User user = this.userRepository.findById(userId).orElse(null);
         if(user==null){
             throw new IllegalArgumentException("User not found");
+        }
+        if(dto.email()!=null){
+            user.setEmail(dto.email());
         }
         if(dto.firstName()!=null){
             user.setFirstName(dto.firstName());

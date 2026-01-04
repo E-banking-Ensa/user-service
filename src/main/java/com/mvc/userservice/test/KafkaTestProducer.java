@@ -24,7 +24,7 @@ public class KafkaTestProducer {
                 "Client Kafka firstname",
                 "Client Kafka lastname",
                 "+33698765432",
-                UserRole.Client,
+                "Client",
                 "456 Avenue Test, Lyon"
         );
 
@@ -42,7 +42,7 @@ public class KafkaTestProducer {
                 "Agent Kafka Test",
                 "Agent Kafka Lastname",
                 "+33611112222",
-                UserRole.Agent,
+                "Agent",
                 "Agence Centre Ville"
         );
 

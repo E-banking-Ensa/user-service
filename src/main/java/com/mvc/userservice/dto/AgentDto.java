@@ -17,6 +17,7 @@ public record AgentDto(
         Status status
 ) {
     public static AgentDto fromEntity(Agent agent){
+        System.out.println("Mapping Agent entity to AgentDto: " + agent.getLastName());
         return new AgentDto(
                 agent.getId(),
                 agent.getCreatedAt(),

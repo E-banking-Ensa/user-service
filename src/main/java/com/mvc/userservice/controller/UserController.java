@@ -29,17 +29,42 @@ public class UserController {
     private final IAgentService agentService;
     private final IDashbordService dashbordService;
 
+
 //    Profil user=======v=======================================================================================
 
     @GetMapping("/admin/dash")
     public ResponseEntity<DashbordAdmin> getAdminDashbord(){
+        System.out.println("getAdminDashbord");
         return ResponseEntity.ok(this.dashbordService.getDashbordAdmin());
+    }
+
+    @PutMapping("/clients/{clientId}/desactivate")//descativer client
+    public ResponseEntity<Void> desactivateClient(@PathVariable UUID clientId){
+        System.out.println("suspendre du client avec id :"+clientId);
+        this.clientService.deactivate(clientId);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/clients/{clientId}/activate")//activer client
+    public ResponseEntity<Void> activateClient(@PathVariable UUID clientId){
+        this.clientService.activate(clientId);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/internal/sync")
    // @PreAuthorize("hasRole('Admin') or hasRole('Agent')") //adopter pour la secrirte inter service
     public ResponseEntity<UserResponseDto> syncUser(@RequestBody CreateUserRequestDto dto){
 //        System.out.println("Syncing user with Keycloak ID: " + dto.keycloakId());
+        System.out.println("Syncing user with id: ");
+        System.out.println("Syncing user with username: " + dto.username());
+        System.out.println("Syncing user with email: " + dto.email());
+        System.out.println("Syncing user with role: " + dto.role());
+        System.out.println("Syncing user with firstName: " + dto.firstName());
+        System.out.println("Syncing user with lastName: " + dto.lastName());
+        System.out.println("Syncing user with phoneNumber: " + dto.phoneNumber());
+        System.out.println("Syncing user with age: " + dto.age());
+        System.out.println("Syncing user with address: " + dto.adresse());
+        System.out.println("User synced successfully.");
         return ResponseEntity.ok(this.userService.createUser(dto));
     }
 
@@ -179,6 +204,13 @@ public class UserController {
 
 //===AFFICHAGE DES AGENTS ==================================================================================================
 
+    //RECUPERER UN TEL DASHBORD D'UN AGENT PAR SON USERNAME
+    @GetMapping("/agents/{username}/dashbord")
+    public ResponseEntity<DashbordAgent> getDashbordAgent(@PathVariable String username) {
+        System.out.println("Fetching dashbord for agent with ID: " + username);
+        return ResponseEntity.ok(this.dashbordService.getDashbordAgent(username));
+    }
+
     //recuperer tous les agents
     @GetMapping("/allAgents")
     //@PreAuthorize("hasRole('Admin')")
@@ -188,8 +220,8 @@ public class UserController {
     }
 
     //SUPPRIMER UN TEL AGENT PAR SON ID
-    @DeleteMapping("/agents/{agentId}" )
-    @PreAuthorize("hasRole('Admin')")
+    @DeleteMapping("/agents/{agentId}/delete" )
+    //@PreAuthorize("hasRole('Admin')")
     public ResponseEntity<Void> deleteAgent(@PathVariable UUID agentId){
         userService.deleteUser(agentId);
         return ResponseEntity.ok().build();
@@ -197,15 +229,15 @@ public class UserController {
 
     //ACTIVER UN TEL AGENT PAR SON ID
     @PutMapping("/agents/{agentId}/activate")
-    @PreAuthorize("hasRole('Admin')")
+  //  @PreAuthorize("hasRole('Admin')")
     public ResponseEntity<Void> activateAgent(@PathVariable UUID agentId){
         this.agentService.activate(agentId);
         return ResponseEntity.ok().build();
     }
 
     //DESACTIVER UN TEL AGENT PAR SON ID
-    @PutMapping("/agents/{agentId}/deactivate")
-    @PreAuthorize("hasRole('Admin')")
+    @PutMapping("/agents/{agentId}/desactivate")
+   // @PreAuthorize("hasRole('Admin')")
     public ResponseEntity<Void> deactivateAgent(@PathVariable UUID agentId){
         this.agentService.deactivate(agentId);
         return ResponseEntity.ok().build();
@@ -213,9 +245,20 @@ public class UserController {
 
     //BLOQUER UN TEL AGENT PAR SON ID
     @PutMapping("/agents/{agentId}/block")
-    @PreAuthorize("hasRole('Admin')")
+   // @PreAuthorize("hasRole('Admin')")
     public ResponseEntity<Void> blockAgent(@PathVariable UUID agentId){
+        System.out.println("Blocking agent with ID: " + agentId);
+
         this.agentService.block(agentId);
+        return ResponseEntity.ok().build();
+    }
+
+    //SUPPRIMER UN TEL AGENT PAR SON ID
+    @PutMapping("/agents/{agentId}/delete")
+   // @PreAuthorize("hasRole('Admin')")
+    public ResponseEntity<Void> deleteAgentPut(@PathVariable UUID agentId){
+        System.out.println("Deleting agent with ID: " + agentId);
+        this.agentService.delete(agentId);
         return ResponseEntity.ok().build();
     }
 

@@ -1,6 +1,8 @@
 package com.mvc.userservice.service;
 
 import com.mvc.userservice.dto.DashbordAdmin;
+import com.mvc.userservice.dto.DashbordAgent;
+import com.mvc.userservice.entity.Agent;
 import com.mvc.userservice.repository.AgentRepository;
 import com.mvc.userservice.repository.ClientRepository;
 import com.mvc.userservice.repository.ConsentRepository;
@@ -23,5 +25,19 @@ public class DashbordService implements IDashbordService {
         dashbordAdmin.setConsents(this.consentRepository.count());
         dashbordAdmin.setComptes(110);
         return dashbordAdmin;
+    }
+    @Override
+    public DashbordAgent getDashbordAgent(String username){
+        Agent agent=this.agentRepository.findByUsername(username);
+        if(agent!=null){
+            DashbordAgent dashbordAgent= new DashbordAgent();
+            dashbordAgent.setClients(this.clientRepository.count());
+            dashbordAgent.setConsentes(this.consentRepository.count());
+            //dashbordAgent.setComptes(50);
+            dashbordAgent.setAgentName(agent.getFirstName()+" "+agent.getLastName());
+            dashbordAgent.setAgentEmail(agent.getEmail());
+            return dashbordAgent;
+        }
+        return null;
     }
 }

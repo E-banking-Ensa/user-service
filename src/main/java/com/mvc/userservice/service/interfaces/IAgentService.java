@@ -10,4 +10,5 @@ public interface IAgentService {
     boolean activate(UUID agentId);
     boolean deactivate(UUID agentId);
     boolean block(UUID agentId);
+    boolean delete(UUID agentId);
 }

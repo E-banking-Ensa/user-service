@@ -11,10 +11,10 @@ public record CreateUserRequestDto(
 //                                   @NotNull UUID keycloakId,
                                    @NotBlank String username,
                                    @NotBlank @Email String email,
-                                   int age,
+                                   Integer age,
                                    @NotBlank String firstName,
                                    @NotBlank String lastName,
                                    @NotBlank String phoneNumber,
-                                   @NotBlank UserRole role,
-                                   String address) {
+                                   @NotBlank String role,
+                                   String adresse) {
 }
