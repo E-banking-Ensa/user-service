@@ -5,11 +5,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 
 @SpringBootApplication
-@EnableDiscoveryClient//pour etablir connexion avec eureka server
+@EnableDiscoveryClient//pour etablir connexion avec eur
 public class UserServiceApplication {
-
     public static void main(String[] args) {
         SpringApplication.run(UserServiceApplication.class, args);
     }
-
 }

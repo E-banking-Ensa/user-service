@@ -4,7 +4,7 @@ import com.mvc.userservice.dto.*;
 import com.mvc.userservice.entity.ConsentType;
 import com.mvc.userservice.enums.KycDocumentType;
 import com.mvc.userservice.service.interfaces.*;
-import com.mvc.userservice.test.KafkaTestProducer;
+//import com.mvc.userservice.test.KafkaTestProducer;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -24,7 +24,7 @@ public class UserController {
     private final IKycService kycService;
     private final IConsentService consentService;
     private final IConsentTypeService consentTypeService;
-    private final KafkaTestProducer kafkaTestProducer;
+    //private final KafkaTestProducer kafkaTestProducer;
     private final IClientService clientService;
     private final IAgentService agentService;
     private final IDashbordService dashbordService;
@@ -269,17 +269,17 @@ public class UserController {
 
 //====TEST DE KAFKKA=============================================================================================
 
-    @GetMapping("/test/kafka-client")
-    @PreAuthorize("hasRole('Admin')")
-    public ResponseEntity<String> testKafkaClient() {
-        kafkaTestProducer.sendTestClientEvent();
-        return ResponseEntity.ok("Événement Client envoyé sur Kafka ! Vérifiez les logs et pgAdmin.");
-    }
-
-    @GetMapping("/test/kafka-agent")
-    @PreAuthorize("hasRole('Admin')")
-    public ResponseEntity<String> testKafkaAgent() {
-        kafkaTestProducer.sendTestAgentEvent();
-        return ResponseEntity.ok("Événement Agent envoyé sur Kafka ! Vérifiez les logs et pgAdmin.");
-    }
+//    @GetMapping("/test/kafka-client")
+//    @PreAuthorize("hasRole('Admin')")
+//    public ResponseEntity<String> testKafkaClient() {
+//        kafkaTestProducer.sendTestClientEvent();
+//        return ResponseEntity.ok("Événement Client envoyé sur Kafka ! Vérifiez les logs et pgAdmin.");
+//    }
+//
+//    @GetMapping("/test/kafka-agent")
+//    @PreAuthorize("hasRole('Admin')")
+//    public ResponseEntity<String> testKafkaAgent() {
+//        kafkaTestProducer.sendTestAgentEvent();
+//        return ResponseEntity.ok("Événement Agent envoyé sur Kafka ! Vérifiez les logs et pgAdmin.");
+//    }
 }
