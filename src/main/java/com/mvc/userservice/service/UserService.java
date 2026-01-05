@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -112,6 +113,44 @@ public class UserService implements IUserService {
             throw new IllegalArgumentException("User not found");
         }
         User user = this.userRepository.findById(userId).orElseThrow();
+        return UserResponseDto.fromEntity(user);
+    }
+
+    @Override
+    public boolean userExists(UUID userId) {
+        return this.userRepository.existsById(userId);
+    }
+
+    @Override
+    public Optional<UserResponseDto> findUserById(UUID userId) {
+        return this.userRepository.findById(userId)
+                .map(UserResponseDto::fromEntity);
+    }
+
+    @Override
+    public UserResponseDto getOrCreateUser(CreateUserRequestDto dto, UUID userId) {
+        // Vérifie si l'utilisateur existe déjà
+        if (userId != null) {
+            Optional<User> existingUser = this.userRepository.findById(userId);
+            if (existingUser.isPresent()) {
+                return UserResponseDto.fromEntity(existingUser.get());
+            }
+        }
+        
+        // Vérifie par email
+        Optional<User> userByEmail = this.userRepository.findByEmail(dto.email());
+        if (userByEmail.isPresent()) {
+            return UserResponseDto.fromEntity(userByEmail.get());
+        }
+        
+        // Créer un nouveau utilisateur
+        return createUser(dto);
+    }
+
+    @Override
+    public UserResponseDto getUserByEmail(String email) {
+        User user = this.userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + email));
         return UserResponseDto.fromEntity(user);
     }
 }

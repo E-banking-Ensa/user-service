@@ -68,6 +68,32 @@ public class UserController {
         return ResponseEntity.ok(this.userService.createUser(dto));
     }
 
+    /**
+     * Vérifie si un utilisateur existe (endpoint interne pour inter-service)
+     */
+    @GetMapping("/internal/exists/{userId}")
+    public ResponseEntity<Boolean> userExists(@PathVariable UUID userId) {
+        return ResponseEntity.ok(userService.userExists(userId));
+    }
+
+    /**
+     * Récupère ou crée un utilisateur (endpoint interne pour inter-service)
+     * Utilisé par account-service lors de la création de comptes
+     */
+    @PostMapping("/internal/get-or-create")
+    public ResponseEntity<UserResponseDto> getOrCreateUser(@RequestBody CreateUserRequestDto dto,
+                                                            @RequestParam(required = false) UUID userId) {
+        return ResponseEntity.ok(userService.getOrCreateUser(dto, userId));
+    }
+
+    /**
+     * Recherche un utilisateur par email (endpoint interne pour inter-service)
+     */
+    @GetMapping("/internal/by-email")
+    public ResponseEntity<UserResponseDto> getUserByEmail(@RequestParam String email) {
+        return ResponseEntity.ok(userService.getUserByEmail(email));
+    }
+
     @GetMapping("/{userId}")//retourner un tel user
    // @PreAuthorize("hasRole('Admin') or hasRole('Agent') or #userId == authentication.principal.attributes.sub")
     public ResponseEntity<UserResponseDto> getUser(@PathVariable UUID userId) {
